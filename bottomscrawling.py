@@ -22,7 +22,7 @@ ctn_dict = {50:2,51:3,63:4}
 service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service)
 
-list_tabs = [63]  # 예시: bags
+list_tabs = [51]  # 예시: bags
 
 def parse_bookmark(s):
     """북마크 문자열을 숫자로 변환"""
