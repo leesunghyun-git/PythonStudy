@@ -137,14 +137,185 @@ train_X,test_X,train_y,test_y = train_test_split(
     stratify=X['school'],
     random_state=0
 )
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt 
 
-fig, axs = plt.subplots(nrows = 1, ncols = 2)
-train_y.hist(ax = axs[0], color = 'blue', alpha = 0.7)
-axs[0].set_title('histogram of train y')
 
-test_y.hist(ax = axs[1], color = 'red', alpha = 0.7)
-axs[1].set_title('histogram of test y')
+# fig, axs = plt.subplots(nrows = 1, ncols = 2)
+# train_y.hist(ax = axs[0], color = 'blue', alpha = 0.7)
+# axs[0].set_title('histogram of train y')
 
-plt.tight_layout( )
-plt.show( )
+# test_y.hist(ax = axs[1], color = 'red', alpha = 0.7)
+# axs[1].set_title('histogram of test y')
+
+# plt.tight_layout( )
+# plt.show( )
+
+print(df.isna().sum(axis=0))
+
+from sklearn.impute import SimpleImputer
+
+train_X1 = train_X.copy()
+test_X1 = test_X.copy()
+'''
+평균 대치법
+'''
+imputer_mean = SimpleImputer(strategy='mean')
+
+train_X1['goout']=imputer_mean.fit_transform(train_X1[['goout']])
+
+test_X1['goout']=imputer_mean.fit_transform(test_X1[['goout']])
+
+print('학습 데이터 goout 변수 결측치 확인:',train_X1['goout'].isna().sum())
+print('테스트 데이터 goout 변수 결측치 확인:',test_X1['goout'].isna().sum())
+
+'''
+fit_transform()
+
+fit()+transform()를 동시에 적용하는 메소드
+'''
+
+#중앙값 대치법
+
+train_X2= train_X.copy()
+test_X2=test_X.copy()
+
+imputer_mean=SimpleImputer(strategy='median')
+train_X2['goout']=imputer_mean.fit_transform(train_X2[['goout']])
+test_X2['goout']=imputer_mean.fit_transform(test_X2[['goout']])
+
+
+print('학습 데이터 goout 변수 결측치 확인:',train_X2['goout'].isna().sum())
+print('테스트 데이터 goout 변수 결측치 확인:',test_X2['goout'].isna().sum())
+
+#최빈값 대처법
+
+train_X3=train_X.copy()
+test_X3=test_X.copy()
+
+imputer_mean=SimpleImputer(strategy='most_frequent')
+
+train_X3['goout']=imputer_mean.fit_transform(train_X3[['goout']])
+test_X3['goout']=imputer_mean.fit_transform(test_X3[['goout']])
+
+print(train_X3.info())
+print('학습 데이터 goout 변수 결측치 확인:',train_X3['goout'].isna().sum())
+print('테스트 데이터 goout 변수 결측치 확인:',test_X3['goout'].isna().sum())
+
+from sklearn.impute import KNNImputer
+
+train_X5 = train_X.copy()
+test_X5 = test_X.copy()
+train_X5_num = train_X5.select_dtypes('number')
+test_X5_num = test_X5.select_dtypes('number')
+
+train_X5_cat = train_X5.select_dtypes('object')
+test_X5_cat = test_X5.select_dtypes('object')
+'''
+KNN 모델
+  k개의 이웃을 택한 후 이웃 관측치의 정보를 활용하여 결측치를 대치
+  장점 : 데이터에 대한 가정 없이 쉽고 빠르게 결측치 대치 간으
+  단점 : 변수 스케일 및 이상치에 민감, 고차원 데이터의 경우 모델 성능이 떨어질 수 있음
+'''
+# 이웃의 크기가 5인 KNN 모형의 예측값을 이용
+knnimputer = KNNImputer(n_neighbors=5)
+
+train_X5_num_imputed = knnimputer.fit_transform(train_X5_num)
+test_X5_num_imputed = knnimputer.fit_transform(test_X5_num)
+
+# KNNImputer는 np.array 형태로 출력되므로 데이터 프레임 형태로 변환 필요
+
+train_X5_num_imputed = pd.DataFrame(
+    train_X5_num_imputed,
+    columns=train_X5_num.columns,
+    index=train_X5.index
+)
+
+test_X5_num_imputed = pd.DataFrame(
+    test_X5_num_imputed,
+    columns=test_X5_num.columns,
+    index=test_X5.index
+)
+
+train_X5=pd.concat([train_X5_cat,train_X5_num_imputed],axis=1)
+
+test_X5=pd.concat([test_X5_cat,test_X5_num_imputed],axis=1)
+
+print('학습 데이터 goout 변수 결측치 확인:',train_X5['goout'].isna().sum())
+print('테스트 데이터 goout 변수 결측치 확인:',test_X5['goout'].isna().sum())
+
+# .set_output(transform='pandas') 메서드를 활용하면 추가 코드 작성 없이 pandas 데이터 프레임으로 변환 가능
+
+knnimputer2 =KNNImputer(n_neighbors=5).set_output(transform='pandas')
+
+train_X5_num_imputed2=knnimputer2.fit_transform(train_X5_num)
+
+test_X5_num_imputed2=knnimputer2.fit_transform(test_X5_num)
+
+print(train_X5_num_imputed2.head())
+
+train_X5=pd.concat([train_X5_cat,train_X5_num_imputed2],axis=1)
+
+test_X5=pd.concat([test_X5_cat,test_X5_num_imputed2],axis=1)
+
+print('학습 데이터 goout 변수 결측치 확인:',train_X5['goout'].isna().sum())
+print('테스트 데이터 goout 변수 결측치 확인:',test_X5['goout'].isna().sum())
+
+from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OrdinalEncoder
+
+train_X6 = train_X.copy()
+
+test_X6= test_X.copy()
+
+train_X6_cat = train_X6.select_dtypes('object')
+test_X6_cat=test_X6.select_dtypes('object')
+
+ordinalencoder = OrdinalEncoder().set_output(transform='pandas')
+
+train_X6_cat = ordinalencoder.fit_transform(train_X6_cat)
+
+test_X6_cat = ordinalencoder.fit_transform(test_X6_cat)
+
+print(test_X6_cat)
+
+print(train_X6_cat)
+
+from sklearn.preprocessing import OneHotEncoder
+
+train_X7= train_X.copy()
+
+test_X7=test_X.copy()
+
+train_X7_cat=train_X7.select_dtypes('object')
+
+test_X7_cat=train_X7.select_dtypes('object')
+
+onehotencoder= OneHotEncoder(sparse_output=False,handle_unknown='ignore').set_output(transform='pandas')
+
+train_X7_cat=onehotencoder.fit_transform(train_X7_cat)
+test_X7_cat=onehotencoder.fit_transform(test_X7_cat)
+
+print(train_X7_cat.head())
+'''
+     school_GP  school_MS  sex_F  sex_M  paid_no  paid_yes
+123        1.0        0.0    1.0    0.0      1.0       0.0
+344        0.0        1.0    1.0    0.0      0.0       1.0
+85         1.0        0.0    1.0    0.0      0.0       1.0
+18         1.0        0.0    0.0    1.0      1.0       0.0
+114        1.0        0.0    1.0    0.0      1.0       0.0
+'''
+
+# help(OneHotEncoder)
+# print(dir(pd))
+train_X8=train_X.copy()
+test_X8=test_X.copy()
+dummyencoder = OneHotEncoder(sparse_output=False,drop='first',handle_unknown='error').set_output(transform='pandas')
+
+train_X8_cat=train_X8.select_dtypes('object')
+test_X8_cat=test_X8.select_dtypes('object')
+train_X8_cat=dummyencoder.fit_transform(train_X8_cat)
+test_x8_cat=dummyencoder.fit_transform(test_X8_cat)
+
+print(train_X8_cat.head())
+print(test_X8_cat.head())
+
